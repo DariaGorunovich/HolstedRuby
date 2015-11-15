@@ -1,0 +1,237 @@
+class Integer
+  # produces a string with a character every so many digits from the
+  # right; by default it's a comma every three digits
+  def to_separated_s(separater = ",", every = 3)
+    digits = to_s.split(//)
+    cursor = every + 1
+    while cursor <= digits.size
+      digits.insert(-cursor, ",")
+      cursor += every + 1
+    end
+    digits.join('')
+  end
+end
+
+
+class Person
+  attr_reader :name, :preferences
+
+  def initialize(name, preferences)
+    @name, @preferences = name, preferences
+  end
+
+  def score(other)
+    @scores[other]
+  end
+
+  # transforms preference list form names to Person instances and adds
+  # a scores hash to quickly go from partner to score (to avoid linear
+  # search); this can only be done once all Persons are created
+  def transform
+    preferences.map! { |name| Person.lookup(name) }
+
+    @scores = {}
+    preferences.each_with_index do |other, index|
+      @scores[other] = index
+    end
+  end
+
+  class << self
+    def people
+      @people.values
+    end
+    
+    def count
+      @people.size
+    end
+    
+    def lookup(name)
+      @people[name]
+    end
+
+    def load(input)
+      @people = {}
+      while line = gets
+        person = new($1, $2.split) if line.match /(.*): (.*)/
+        @people[person.name] = person
+      end
+
+      # now transform everyone
+      @people.values.each do |person|
+        person.transform
+      end
+    end
+
+    protected :new
+  end
+end
+
+
+# Represents a pair of Persons, or possibly one Person and nil if
+# there were originally an odd number of Persons.
+class Partnership
+  attr_reader :people
+
+  def initialize(person1, person2)
+    @people = [person1, person2]
+  end
+
+  def first
+    @people.first
+  end
+
+  def second
+    @people.last
+  end
+
+  # the score for a parternship of one person is always 0, otherwise
+  # it's the sum of the squares of the indices of each Person in the
+  # Partnership
+  def score
+    @score ||=
+      first && second ?
+        first.score(second) ** 2 + second.score(first) ** 2 :
+        0
+  end
+
+  # true if only one person is in the Partnership
+  def solo?
+    !(first && second)
+  end
+
+  def to_s
+    if first && second : "#{first.name} #{second.name}"
+    elsif first : first.name
+    else second.name
+    end
+  end
+end
+
+
+# A ParternshipScheme is a set of Partnerships where each Person
+# appears in only one Partnership.
+class ParternshipScheme
+  attr_reader :partnerships
+
+  def initialize(partnerships)
+    raise problem unless partnerships.all? { |p| p.is_a? Partnership }
+    @partnerships = partnerships
+  end
+
+  def score
+    @score ||= @partnerships.inject(0) { |sum, p| sum + p.score }
+  end
+
+  # Picks two of the Parternships at random, swaps one person from
+  # each, and generates a new scheme.  It's important that when we mix
+  # up the two Partnerships that one person moves from the first
+  # position to the second and another vice versa.  If people are
+  # frozen in the first or second, then it limits the potential
+  # Partnerships and ParternshipSchemes available.
+  def mutate
+    new_partnerships = @partnerships.dup
+    partnership1 =
+      new_partnerships.delete_at(rand(new_partnerships.size))
+    partnership2 =
+      new_partnerships.delete_at(rand(new_partnerships.size))
+    new_partnerships <<
+      Partnership.new(partnership1.first, partnership2.first)
+    new_partnerships <<
+      Partnership.new(partnership1.second, partnership2.second)
+    ParternshipScheme.new(new_partnerships)
+  end
+
+  def to_s
+    @partnerships.sort_by { |p|
+      p.solo?.hash }.map { |partnership|
+      partnership.to_s }.join("\n")
+  end
+
+  class << self
+    def randomized(people)
+      partnerships = []
+      randomized = people.sort_by { rand }
+      randomized.each_slice(2) do |p1, p2|
+        partnerships << Partnership.new(p1, p2)
+      end
+      new(partnerships)
+    end
+
+    # given a fixed number of people returns how many pair
+    # parternships are possible; one formula for this value is the
+    # product of all odd values from 1..people.
+    def possible_count(people)
+      # people.factorial / (2 ** (people / 2)) / (people / 2).factorial
+      (1..people).select { |p| p & 1 == 1 }.inject { |product, v|
+        product * v }
+    end
+  end
+end
+
+
+if $0 == __FILE__
+  case ARGV.size
+  when 0 : Person.load(STDIN)
+  when 1 : open(ARGV[0]) { |f| Person.load(f) }
+  else
+    STDERR.puts "Usage: #{$0} [data-file]"
+    STDERR.puts "  stdin used if no data-file provided"
+    exit 1
+  end
+
+  possible_scheme_count =
+    ParternshipScheme.possible_count(Person.count)
+
+  puts "Calculating for #{Person.count} people."
+  puts "The number of possible partnership combinations is:\n    " +
+    "#{possible_scheme_count.to_separated_s}."
+
+  ## Determine the basic parameters for the genetic algorithm.
+
+  # there is no great insight behind this formula other than that when
+  # there were 20 people to be paired up, 400 seemed to work well for
+  # both population_size and generations, so I used a logorithmic
+  # scale to make it come out that way
+  population_size =
+    ((Math.log(possible_scheme_count) / Math.log(2))**1.8).to_i
+
+  generations = population_size
+  offspring = population_size / 2
+  keep_best = population_size / 2
+  keep_random = population_size + offspring - keep_best
+
+  puts "Population: #{population_size} ; Generations: #{generations}"
+
+  ## Create the initial population.
+  
+  population = []
+  population_size.times do
+    population << ParternshipScheme.randomized(Person.people)
+  end
+
+  ## Run through the generations.
+  
+  generations.times do |generation|
+    # add offspring to population
+    offspring.times do
+      population << population[rand(population_size)].mutate
+    end
+
+    # sort new population by fitness
+    population = population.sort_by { |scheme| scheme.score }
+
+    # the next generation's pop. consists of keep_best best scoring
+    # plus a random selection of the remaining non-best in the
+    # population
+    best = population[0, keep_best]
+    random =
+      population[keep_best..-1].sort_by { rand }[0, keep_random]
+    population = best + random
+  end
+
+  ## Display the best results.
+
+  puts "Score of best partnership combination found: " +
+    "#{population.first.score.to_separated_s}."
+  puts population.first
+end

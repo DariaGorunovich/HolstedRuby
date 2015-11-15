@@ -1,0 +1,13 @@
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\bin\Debug\HolstedRuby.exe.config
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\bin\Debug\HolstedRuby.exe
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\bin\Debug\HolstedRuby.pdb
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\HolstedRuby.csprojResolveAssemblyReference.cache
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\MainWindow.baml
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\MainWindow.g.cs
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\App.g.cs
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\HolstedRuby_MarkupCompile.cache
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\HolstedRuby.g.resources
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\HolstedRuby.Properties.Resources.resources
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\HolstedRuby.csproj.GenerateResource.Cache
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\HolstedRuby.exe
+W:\VisualSt\MSiSInf\Laba_1\HolstedRuby\HolstedRuby\obj\Debug\HolstedRuby.pdb
